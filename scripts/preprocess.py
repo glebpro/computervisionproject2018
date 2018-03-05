@@ -4,8 +4,13 @@
 #   @author Gleb Promokhov
 #
 import os
+from collections import Counter
+import matplotlib.pyplot as plt
 
 def load_images(project_root=-1):
+    """
+    :return: labels of birds as strings, [(class_as_index, image_path, segmentations_path), ...]
+    """
     if project_root == -1:
         project_root = os.path.dirname(os.path.realpath(__file__+"/.."))
 
@@ -18,7 +23,7 @@ def load_images(project_root=-1):
 
     # get source image classes
     classes = open(image_data_path + "image_class_labels.txt").readlines()
-    classes = [int(r.split()[1].strip()) for r in classes]
+    classes = [int(r.split()[1].strip())-1 for r in classes]
 
     # get source+segmentations image paths
     source_image_paths = open(image_data_path + "images.txt").readlines()
@@ -33,4 +38,25 @@ def load_images(project_root=-1):
 
     return labels, data
 
-__all__ = ['load_images']
+def plot_class_distribution(data):
+    """
+    Plot class distribution to catch class imbalances
+    """
+    classes = [r[0] for r in data]
+    plt.hist(classes)
+    plt.xlabel('Labels')
+    plt.ylabel('Counts')
+    plt.title('Histogram of class counts')
+    plt.show()
+
+def main():
+
+    labels, data = load_images()
+    plot_class_distribution(data)
+    return 0
+
+
+if __name__ == "__main__":
+    main()
+
+__all__ = ['load_images', 'plot_class_distributions']
