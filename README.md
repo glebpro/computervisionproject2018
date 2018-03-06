@@ -21,7 +21,7 @@ Unzip to this repo folder into `data/CUB_200_2011` and `data/segmentations`.
 #### Scripts
 
 #### Requirements
-[python](https://www.python.org/) >= 3.4
+[python](https://www.python.org/) >= 3.4, [matplotlib](https://matplotlib.org/) >= 2.0.2, [opencv-python](http://opencv-python-tutroals.readthedocs.io/en/latest/py_tutorials/py_tutorials.html) >= 3.4.0.12
 
 #### License
 MIT licensed. See the bundled [LICENSE](/LICENSE) file for more details.
