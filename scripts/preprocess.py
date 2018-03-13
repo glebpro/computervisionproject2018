@@ -6,6 +6,8 @@
 
 import os
 import errno
+import pathlib
+from shutil import copyfile
 
 import matplotlib.pyplot as plt
 import cv2
@@ -57,6 +59,7 @@ def apply_segmentations(classes, data):
     output_file_list = open(output_file_list, "w+")
 
     for r in data:
+        print("~~~ SEGMENTING: "+r[1])
         seg = cv2.imread(r[2])
         img = cv2.imread(r[1])
         img2 = cv2.bitwise_and(img, seg)
@@ -102,6 +105,62 @@ def plot_class_distribution(data):
     plt.title('Histogram of class counts')
     plt.show()
 
+def split_dir(dirr, output_dir, dirs=['train', 'validation', 'test'], split=(.5,.25,.25)):
+    """
+    Split a labeled image directory into train/validation/test dirs.
+    """
+
+    # get all image paths
+    image_paths = []
+    for filepath in pathlib.Path(dirr).glob('**/*'):
+        image_paths.append(filepath.absolute())
+
+    # organize into {class_name:[class_image_paths, ...], ...}
+    class_dict = {}
+    for i in image_paths:
+        fname = str(i).split("/")
+        file_name = fname[len(fname)-1]
+        class_name = fname[len(fname)-2]
+        if class_name not in class_dict.keys():
+            class_dict[class_name] = []
+        class_dict[class_name].append(str(i))
+
+    del class_dict['segmented_images'] #I don't know why
+
+    # organize into {class_name:[[train_paths],[validation_paths],[test_paths]], ...}
+    # by given
+    for k in class_dict.keys():
+        paths = class_dict[k]
+
+        train_split = int(len(paths)*split[0])
+        validation_split = int(len(paths)*split[1])
+
+        train_paths = paths[train_split:]
+        validation_paths = paths[train_split:validation_split+train_split]
+        test_paths = paths[validation_split+train_split:]
+
+        class_dict[k] = [train_paths, validation_paths, test_paths]
+
+    # make output dirs
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+        os.makedirs(output_dir+"/"+dirs[0])
+        os.makedirs(output_dir+"/"+dirs[1])
+        os.makedirs(output_dir+"/"+dirs[2])
+
+    # move everything
+    for k in class_dict.keys():
+        for d_i,d in enumerate(dirs):
+
+            if not os.path.exists(output_dir+"/"+d+"/"+k):
+                os.makedirs(output_dir+"/"+d+"/"+k)
+
+            for path in class_dict[k][d_i]:
+                file_name = path.split("/")
+                file_name = file_name[len(file_name)-1]
+                print(k)
+                copyfile(path, output_dir+"/"+d+"/"+k+"/"+file_name)
+
 def check_data_struct():
     """
     Check that all data is in place first
@@ -126,6 +185,8 @@ def main():
     apply_segmentations(classes, data)
 
     #augment_images()
+
+    split_dir("/Users/gpro/gpc/rit/compvis/BirdNet/data/segmented_images", "/Users/gpro/gpc/rit/compvis/BirdNet/data/split_segmented_images")
 
 if __name__ == "__main__":
     main()

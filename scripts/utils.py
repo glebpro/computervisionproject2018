@@ -4,6 +4,8 @@
 #   @author Gleb Promokhov
 #
 
+import pathlib
+import os
 
 def show_images(images, titles=[]):
     """
