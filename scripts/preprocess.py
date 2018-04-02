@@ -11,6 +11,7 @@ from shutil import copyfile
 
 import matplotlib.pyplot as plt
 import cv2
+import numpy as np
 
 PROJECT_ROOT = os.path.dirname(os.path.realpath(__file__+"/.."))
 
@@ -43,6 +44,19 @@ def load_images():
 
     return classes, data
 
+def convert_to_edges(source_folder):
+    """
+    Convert directory of images into edges.
+    """
+    image_paths = []
+    for filepath in pathlib.Path(source_folder).glob('**/*png'):
+        image_paths.append(filepath.absolute())
+
+    for i in image_paths:
+        img = cv2.imread(str(i))
+        edges = cv2.Canny(img,100,200)
+        cv2.imwrite(str(i), img)
+
 def apply_segmentations(classes, data):
     """
     Apply segmentations to images, save them into /data/
@@ -55,9 +69,6 @@ def apply_segmentations(classes, data):
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
-    output_file_list = PROJECT_ROOT + "/data/segmented_images/segmented_image_paths.txt"
-    output_file_list = open(output_file_list, "w+")
-
     for r in data:
         print("~~~ SEGMENTING: "+r[1])
         seg = cv2.imread(r[2])
@@ -67,32 +78,10 @@ def apply_segmentations(classes, data):
         filename = filename[len(filename)-1].split(".")[0]
         if not os.path.exists(output_dir+classes[r[0]]):
             os.makedirs(output_dir+classes[r[0]])
-        cv2.imwrite(output_dir+classes[r[0]]+"/"+filename+"_SEGMENTED.png", img2)
-        output_file_list.write(output_dir+classes[r[0]]+"/"+filename+"_SEGMENTED.png\n")
-        segmented_data.append((r[0],output_dir+classes[r[0]]+"/"+filename+"_SEGMENTED.png"))
+        cv2.imwrite(output_dir+classes[r[0]]+"/"+filename+".png", img2)
+        segmented_data.append((r[0],output_dir+classes[r[0]]+"/"+filename+".png"))
 
-    output_file_list.close()
-
-    return classes, segmented_data
-
-def augment_images():
-    """
-    Augment image data set
-    """
-    if not os.path.exists(PROJECT_ROOT+'/data/segmented_images'):
-        raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), PROJECT_ROOT+'/data/segmented_images')
-
-    # load segmented images
-    segmented_data_path = PROJECT_ROOT + "/data/segmented_images"
-    image_paths = []
-    for filepath in pathlib.Path(segmented_data_path).glob('**/*'):
-        image_paths.append(filepath.absolute())
-
-    #
-    output_dir = PROJECT_ROOT + "/data/segmented_images/"
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
-
+    return segmented_data
 
 def plot_class_distribution(data):
     """
@@ -125,7 +114,7 @@ def split_dir(dirr, output_dir, dirs=['train', 'validation', 'test'], split=(.5,
             class_dict[class_name] = []
         class_dict[class_name].append(str(i))
 
-    del class_dict['segmented_images'] #I don't know why
+    del class_dict['segmented_head_images'] #I don't know why
 
     # organize into {class_name:[[train_paths],[validation_paths],[test_paths]], ...}
     # by given
@@ -158,8 +147,86 @@ def split_dir(dirr, output_dir, dirs=['train', 'validation', 'test'], split=(.5,
             for path in class_dict[k][d_i]:
                 file_name = path.split("/")
                 file_name = file_name[len(file_name)-1]
-                print(k)
                 copyfile(path, output_dir+"/"+d+"/"+k+"/"+file_name)
+
+def segment_heads(classes, data):
+    """
+    Remove 'non-head' parts of birds.
+    """
+
+    segmented_data =[]
+
+    # gather and organize needed data
+    output_dir = PROJECT_ROOT + "/data/segmented_head_images/"
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
+    img_ids_file = open(PROJECT_ROOT + '/data/CUB_200_2011/images.txt').readlines()
+    img_ids_file = [i.strip().split(' ') for i in img_ids_file]
+
+    parts_file = open(PROJECT_ROOT +'/data/CUB_200_2011/parts/part_locs.txt').readlines()
+    parts_file = [i.strip().split(' ') for i in parts_file]
+
+    # <image_id> <x> <y> <width> <height>
+    bounding_file = open(PROJECT_ROOT +'/data/CUB_200_2011/bounding_boxes.txt').readlines()
+    bounding_file = [i.strip().split(' ') for i in bounding_file]
+
+    img_ids = {}
+    for i in img_ids_file:
+        img_ids[i[1]] = int(i[0])
+
+    part_ids = {}
+    for i in parts_file:
+        part_ids[(int(i[0]), int(i[1]))] = list(map(lambda x:int(float(x)), i[2:]))
+
+    boudning_ids = {}
+    for i in bounding_file:
+        boudning_ids[int(i[0])] = list(map(lambda x:int(float(x)), i[1:]))
+
+    for r in data:
+        print("~~~SEGMENTING HEAD: ", r[1])
+
+        img_id = r[1].split('/')
+        img_id = img_id[len(img_id)-2] + '/' + img_id[len(img_id)-1].replace('png', 'jpg')
+        img_id = img_ids[img_id]
+
+        # get location of bird parts
+        nape = part_ids[(img_id, 10)]
+        tail = part_ids[(img_id, 14)]
+        throat = part_ids[(img_id, 15)]
+        bounds = boudning_ids[img_id]
+
+        # if any of that parts not visible
+        if nape[2] == 0 or tail[2] == 0 or throat[2] == 0 or nape[1] - throat[1] == 0:
+            continue
+
+        # compute on what side of nape-throat line tail is on
+        tail_side = (tail[1] - throat[0])*(nape[1] - throat[1]) - (tail[0] - throat[1])*(throat[0] - nape[0])
+
+        img = cv2.imread(r[1])
+        (rows, cols, _) = img.shape
+
+        # all pixels on same side of nape-throat line as tail turn off
+        for y in range(0,rows):
+            for x in range(0,cols):
+                v1 = (nape[0]-throat[0], nape[1] - throat[0])
+                v2 = (x - throat[0], y - throat[1])
+                c_p = v1[0]*v2[1]-v1[1]*v2[0]
+                if np.sign(tail_side) != np.sign(c_p):
+                    img[y, x, :] = 0
+
+        # crop by boudning box
+        img = img[bounds[1]:bounds[1]+bounds[3], bounds[0]:bounds[0]+bounds[2], :]
+
+        # save
+        filename = r[1].split("/")
+        filename = filename[len(filename)-1].split(".")[0]
+        if not os.path.exists(output_dir+classes[r[0]]):
+            os.makedirs(output_dir+classes[r[0]])
+        cv2.imwrite(output_dir+classes[r[0]]+"/"+filename+".png", img)
+        segmented_data.append((r[0],output_dir+classes[r[0]]+"/"+filename+".png"))
+
+    return segmented_data
 
 def check_data_struct():
     """
@@ -178,15 +245,23 @@ def main():
 
     check_data_struct()
 
+    # classes = ['001.Black_footed_Albatross', '002.Laysan_Albatross', ...]
+    # data = [(class, source_image_path, segmentation_image_path), ...]
     classes, data = load_images()
 
     # plot_class_distribution(data)
 
-    apply_segmentations(classes, data)
+    # data = [(class, segmented_image_path), ...]
+    data = apply_segmentations(classes, data)
 
-    #augment_images()
+    # data = [(class, segmented_head_image_path), ...]
+    data = segment_heads(classes, data)
 
-    split_dir("/Users/gpro/gpc/rit/compvis/BirdNet/data/segmented_images", "/Users/gpro/gpc/rit/compvis/BirdNet/data/split_segmented_images")
+    # split each class subdirectory into train/validation/test subdirectories
+    split_dir(PROJECT_ROOT + "/data/segmented_head_images/", PROJECT_ROOT + "/data/split_segmented_head_images/")
+
+    # convert_to_edges("/Users/gpro/gpc/rit/compvis/BirdNet/data/split_segmented_images_5_edges")
+
 
 if __name__ == "__main__":
     main()

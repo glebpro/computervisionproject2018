@@ -8,14 +8,47 @@ import os
 import pathlib
 import datetime
 
+import cv2
+
 from keras.preprocessing.image import ImageDataGenerator
 from keras.models import Sequential
 from keras.layers import Conv2D, MaxPooling2D
 from keras.layers import Activation, Dropout, Flatten, Dense
 from keras import backend as K
+from keras.utils import plot_model
+from keras.callbacks import Callback, TensorBoard
+from keras import activations
+
+from matplotlib import pyplot as plt
+from IPython.display import clear_output
+
+from vis.visualization import visualize_activation
+from vis.utils import utils
+from vis.visualization import visualize_saliency
+
+from utils import show_images
 
 
 PROJECT_ROOT = os.path.dirname(os.path.realpath(__file__+"/.."))
+
+class GifPlot(object):
+
+    def __init__(self, model):
+
+        # Swap softmax with linear
+        # model.layers[layer_idx].activation = activations.linear
+        # model = utils.apply_modifications(model)
+
+        x_test = cv2.imread("/Users/gpro/gpc/rit/compvis/BirdNet/data/split_segmented_images/test/001.Black_footed_Albatross/Black_Footed_Albatross_0071_796113_SEGMENTED.png")
+        x_test = cv2.resize(x_test, (150, 150))
+
+        grads = []
+        titles = []
+        for layer_idx in list(range(len(model.layers))):
+            titles.append(model.layers[layer_idx].name)
+            grads.append(visualize_saliency(model, layer_idx, filter_indices=1, seed_input=x_test))
+
+        show_images(grads, titles, 4)
 
 class BirdNetClassifer(object):
     """
@@ -28,7 +61,7 @@ class BirdNetClassifer(object):
         self.classes = classes
         self.IMG_WIDTH = 150
         self.IMG_HEIGHT = 150
-        self.EPOCHS = 1
+        self.EPOCHS = 50
         self.BATCH_SIZE = 16
 
         self.N_TRAINING = 0
@@ -48,10 +81,14 @@ class BirdNetClassifer(object):
     def save(self, save_path):
         self.model.save_weights(save_path)
 
+    def save_image(self, save_path):
+        plot_model(self.model, to_file=save_path, show_shapes=True, show_layer_names=True)
+
     def train(self, training_images_dir, validation_images_dir):
         """
         Fit model with images.
         """
+
         # this is the augmentation configuration we will use for training
         train_datagen = ImageDataGenerator(
                             rescale=1. / 255,
@@ -60,27 +97,34 @@ class BirdNetClassifer(object):
                             horizontal_flip=True)
 
         # this is the augmentation configuration we will use for testing:
-        # only rescaling
-        test_datagen = ImageDataGenerator(rescale=1. / 255)
+        validation_datagen = ImageDataGenerator(rescale=1. / 255)
 
         train_generator = train_datagen.flow_from_directory(
                             training_images_dir,
                             target_size=(self.IMG_WIDTH, self.IMG_HEIGHT),
                             batch_size=self.BATCH_SIZE,
-                            class_mode='categorical')
+                            class_mode='categorical'
+                            # ,color_mode='grayscale'
+                            )
 
-        validation_generator = test_datagen.flow_from_directory(
+        validation_generator = validation_datagen.flow_from_directory(
                                 validation_images_dir,
                                 target_size=(self.IMG_WIDTH, self.IMG_HEIGHT),
                                 batch_size=self.BATCH_SIZE,
-                                class_mode='categorical')
+                                class_mode='categorical'
+                                # ,color_mode='grayscale'
+                                )
+
+        plotter = [TensorBoard(log_dir='./logs')]
+
 
         self.model.fit_generator(
             train_generator,
             steps_per_epoch=self.N_TRAINING // self.BATCH_SIZE,
             epochs=self.EPOCHS,
             validation_data=validation_generator,
-            validation_steps=self.N_VALIDATION // self.BATCH_SIZE)
+            validation_steps=self.N_VALIDATION // self.BATCH_SIZE,
+            callbacks=plotter)
 
     def evaluate(self, testing_images_dir):
         """
@@ -91,7 +135,9 @@ class BirdNetClassifer(object):
         eval_generator = datagen.flow_from_directory(
                             testing_images_dir,
                             target_size=(self.IMG_WIDTH, self.IMG_HEIGHT),
-                            batch_size=self.BATCH_SIZE)
+                            batch_size=self.BATCH_SIZE
+                            ,color_mode='grayscale'
+                            )
 
         stats = self.model.evaluate_generator(eval_generator, steps=len(eval_generator))
 
@@ -140,22 +186,29 @@ class BirdNetClassifer(object):
 def main():
 
     # define training/validation/testing images directories
-    training_images_dir = PROJECT_ROOT + "/data/split_segmented_images/train"
-    validation_images_dir = PROJECT_ROOT + "/data/split_segmented_images/validation"
-    testing_images_dir = PROJECT_ROOT + "/data/split_segmented_images/test"
+    training_images_dir = PROJECT_ROOT + "/data/split_segmented_head_images/train"
+    validation_images_dir = PROJECT_ROOT + "/data/split_segmented_head_images/validation"
+    testing_images_dir = PROJECT_ROOT + "/data/split_segmented_head_images/test"
 
     # get class labels vector
     classes = open(PROJECT_ROOT + "/data/CUB_200_2011/classes.txt").readlines()
-    classes = [r.split()[1].strip() for r in classes]
+    classes = [r.split()[1].strip() for r in classes][:5]
 
     # build+save classifier
     bnc = BirdNetClassifer(classes, training_images_dir, validation_images_dir)
     bnc.train(training_images_dir, validation_images_dir)
     timestamp = datetime.datetime.now().strftime("%d-%m-%Y_%H:%M:%S")
     bnc.save('models/BirdNetModel_%s.h5' % timestamp)
-    # bnc.load(PROJECT_ROOT+"/models/BirdNetModel_13-03-2018_17:16:24.h5")
+    # bnc.load(PROJECT_ROOT+"/models/BirdNetModel_first5classes_fullcolor_16-03-2018_11:05:50.h5")
+
+    # print(dir(bnc.model))
+
+    # g = GifPlot(bnc.model)
+
 
     bnc.evaluate(testing_images_dir)
+
+    # bnc.save_image(PROJECT_ROOT+"/models/model1.png")
 
 if __name__ == "__main__":
     main()

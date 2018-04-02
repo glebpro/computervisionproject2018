@@ -19,12 +19,14 @@ Unzip to this repo folder into `data/CUB_200_2011` and `data/segmentations`.
 
 #### Scripts
 
-`$ python scripts/preprocess.py` will confirm you have the correct project file structure, and apply the image segmentations, split images into training/validation/testing folders into `/data/split_segmented_images`
+`$ python scripts/preprocess.py` will confirm you have the correct project file structure, and apply the image segmentations, split images into training/validation/testing folders into `/data/split_segmented_head_images`
 
 `$ python scripts/BirdNetClassifer.py` will generate a model, evaluate it, and save it into [/models](/models)
 
 #### Requirements
-[python](https://www.python.org/) >= 3.4, [matplotlib](https://matplotlib.org/) >= 2.0.2, [opencv-python](http://opencv-python-tutroals.readthedocs.io/en/latest/py_tutorials/py_tutorials.html) >= 3.4.0.12, [Keras](https://keras.io/) >= 2.0.9
+[python](https://www.python.org/) >= 3.4, [matplotlib](https://matplotlib.org/) >= 2.2.2, [opencv-python](http://opencv-python-tutroals.readthedocs.io/en/latest/py_tutorials/py_tutorials.html) >= 3.4.0.12, [Keras](https://keras.io/) >= 2.0.9, [ipython](https://ipython.org/) >= 6.3.0, [numpy](http://www.numpy.org/) >=1.14.2, [vis](http://vispy.org/) >= 0.0.5a1, [keras_vis](https://github.com/raghakot/keras-vis) >= 0.4.1
+
+Or just do : `$ pip install -r requirements.txt`
 
 #### License
 MIT licensed. See the bundled [LICENSE](/LICENSE) file for more details.
