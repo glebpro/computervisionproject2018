@@ -2,6 +2,7 @@
 #   Preprocess bird image data.
 #
 #   @author Gleb Promokhov
+#   @author Greg Goh
 #
 
 import os
@@ -228,6 +229,37 @@ def segment_heads(classes, data):
 
     return segmented_data
 
+def load_attributes():
+    """
+    Read in attribute labels and certainties.
+    """
+
+    # <attribute_id> <attribute_name>
+    attributes_file = open(PROJECT_ROOT +'/data/attributes.txt').readlines()
+    attributes_file = [i.strip().split(' ') for i in attributes_file]
+
+    # <certainty_id> <certainty_name>
+    certainties_file = open(PROJECT_ROOT +'/data/CUB_200_2011/attributes/certainties.txt').readlines()
+    certainties_file = [i.strip().split(' ') for i in certainties_file]
+
+    # <image_id> <attribute_id> <is_present> <certainty_id> <time>
+    labels_file = open(PROJECT_ROOT +'/data/CUB_200_2011/attributes/image_attribute_labels.txt').readlines()
+    labels_file = [i.strip().split(' ') for i in labels_file]
+
+    attribute_ids = {}
+    for i in attributes_file:
+        attribute_ids[i[1]] = int(i[0])
+
+    certainty_ids = {}
+    for i in certainties_file:
+        certainty_ids[i[1]] = int(i[0])
+
+    label_ids = {}
+    for i in labels_file:
+        label_ids[(int(i[0]), int(i[1]))] = list(map(lambda x:int(float(x)), i[2:]))
+
+    return attribute_ids, certainty_ids, label_ids
+
 def check_data_struct():
     """
     Check that all data is in place first
@@ -240,6 +272,9 @@ def check_data_struct():
 
     if not os.path.exists(PROJECT_ROOT+'/data/segmentations'):
         raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), PROJECT_ROOT+'/data/segmentations')
+
+    if not os.path.exists(PROJECT_ROOT+'/data/attributes.txt'):
+        raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), PROJECT_ROOT+'/data/attributes.txt')
 
 def main():
 
