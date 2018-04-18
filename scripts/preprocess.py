@@ -236,15 +236,15 @@ def load_attributes():
 
     # <attribute_id> <attribute_name>
     attributes_file = open(PROJECT_ROOT +'/data/attributes.txt').readlines()
-    attributes_file = [i.strip().split(' ') for i in attributes_file]
+    attributes_file = [i.strip().split() for i in attributes_file]
 
     # <certainty_id> <certainty_name>
     certainties_file = open(PROJECT_ROOT +'/data/CUB_200_2011/attributes/certainties.txt').readlines()
-    certainties_file = [i.strip().split(' ') for i in certainties_file]
+    certainties_file = [i.strip().split() for i in certainties_file]
 
     # <image_id> <attribute_id> <is_present> <certainty_id> <time>
     labels_file = open(PROJECT_ROOT +'/data/CUB_200_2011/attributes/image_attribute_labels.txt').readlines()
-    labels_file = [i.strip().split(' ') for i in labels_file]
+    labels_file = [i.strip().split() for i in labels_file]
 
     attribute_ids = {}
     for i in attributes_file:
