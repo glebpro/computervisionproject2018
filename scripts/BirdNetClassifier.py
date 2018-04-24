@@ -176,11 +176,16 @@ def main():
 
     # build+save classifier
     bnc = BirdNetClassifer(classes, training_images_dir, validation_images_dir)
+
+    time_start = datetime.datetime.now()
+
     bnc.train(training_images_dir, validation_images_dir)
 
+    time_end = datetime.datetime.now()
 
-    timestamp = datetime.datetime.now().strftime("%d-%m-%Y_%H:%M:%S")
-    bnc.save('models/BirdNetModel_%s.h5' % timestamp)
+    bnc.save('models/BirdNetModel_%s.h5' % time_end.strftime("%d-%m-%Y_%H:%M:%S"))
+
+    print("~~~ TRAINING TIME: ", time_end-time_start)
 
 
     # bnc.load(PROJECT_ROOT+"/models/BirdNetModel_first5classes_fullcolor_16-03-2018_11:05:50.h5")
