@@ -218,9 +218,9 @@ def segment_heads(classes, data):
                 if np.sign(tail_side) == np.sign(side):
                     img[y, x, :] = 0
 
-        img = cv2.circle(img, (nape[0], nape[1]), 3, (255, 0, 0))
-        img = cv2.circle(img, (tail[0], tail[1]), 3, (0, 255, 0))
-        img = cv2.circle(img, (throat[0], throat[1]), 3, (0, 0, 255))
+        # img = cv2.circle(img, (nape[0], nape[1]), 3, (255, 0, 0))
+        # img = cv2.circle(img, (tail[0], tail[1]), 3, (0, 255, 0))
+        # img = cv2.circle(img, (throat[0], throat[1]), 3, (0, 0, 255))
 
         # crop by boudning box
         img = img[bounds[1]:bounds[1]+bounds[3], bounds[0]:bounds[0]+bounds[2], :]
@@ -255,6 +255,8 @@ def main():
     # classes = ['001.Black_footed_Albatross', '002.Laysan_Albatross', ...]
     # data = [(class, source_image_path, segmentation_image_path), ...]
     classes, data = load_images()
+
+    data = data[:100]
 
     # plot_class_distribution(data)
 

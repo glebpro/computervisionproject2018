@@ -163,7 +163,6 @@ class BirdNetClassifer(object):
 
         return model
 
-
 def main():
 
     # define training/validation/testing images directories
@@ -173,7 +172,7 @@ def main():
 
     # get class labels vector
     classes = open(PROJECT_ROOT + "/data/CUB_200_2011/classes.txt").readlines()
-    classes = [r.split()[1].strip() for r in classes][:5]
+    classes = [r.split()[1].strip() for r in classes]
 
     # build+save classifier
     bnc = BirdNetClassifer(classes, training_images_dir, validation_images_dir)
@@ -183,7 +182,7 @@ def main():
     timestamp = datetime.datetime.now().strftime("%d-%m-%Y_%H:%M:%S")
     bnc.save('models/BirdNetModel_%s.h5' % timestamp)
 
-    
+
     # bnc.load(PROJECT_ROOT+"/models/BirdNetModel_first5classes_fullcolor_16-03-2018_11:05:50.h5")
 
 
