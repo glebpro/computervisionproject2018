@@ -191,6 +191,7 @@ def segment_heads(classes, data):
         img_id = img_ids[img_id]
 
         # get location of bird parts
+        # [x, y, visible or not]
         nape = part_ids[(img_id, 10)]
         tail = part_ids[(img_id, 14)]
         throat = part_ids[(img_id, 15)]
@@ -200,8 +201,11 @@ def segment_heads(classes, data):
         if nape[2] == 0 or tail[2] == 0 or throat[2] == 0 or nape[1] - throat[1] == 0:
             continue
 
+        #A=(x1,y1)  to B=(x2,y2) a point P=(x,y) f
+        #d=(x−x1)(y2−y1)−(y−y1)(x2−x1)
+
         # compute on what side of nape-throat line tail is on
-        tail_side = (tail[1] - throat[0])*(nape[1] - throat[1]) - (tail[0] - throat[1])*(throat[0] - nape[0])
+        tail_side = (tail[0] - nape[0])*(throat[1] - nape[1])-(tail[1] - nape[1])*(throat[0]-nape[0])
 
         img = cv2.imread(r[1])
         (rows, cols, _) = img.shape
@@ -209,11 +213,14 @@ def segment_heads(classes, data):
         # all pixels on same side of nape-throat line as tail turn off
         for y in range(0,rows):
             for x in range(0,cols):
-                v1 = (nape[0]-throat[0], nape[1] - throat[0])
-                v2 = (x - throat[0], y - throat[1])
-                c_p = v1[0]*v2[1]-v1[1]*v2[0]
-                if np.sign(tail_side) != np.sign(c_p):
+                side = (x - nape[0])*(throat[1] - nape[1])-(y - nape[1])*(throat[0]-nape[0])
+
+                if np.sign(tail_side) == np.sign(side):
                     img[y, x, :] = 0
+
+        img = cv2.circle(img, (nape[0], nape[1]), 3, (255, 0, 0))
+        img = cv2.circle(img, (tail[0], tail[1]), 3, (0, 255, 0))
+        img = cv2.circle(img, (throat[0], throat[1]), 3, (0, 0, 255))
 
         # crop by boudning box
         img = img[bounds[1]:bounds[1]+bounds[3], bounds[0]:bounds[0]+bounds[2], :]

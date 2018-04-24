@@ -12,7 +12,7 @@ Experiments in classifying birds.
 ## Technicals
 
 #### Downloads
-To download code: `$ git clone https://github.com/glebpro/computervision2018`
+To download code: `$ git clone https://github.com/glebpro/computervisionproject2018.git`
 
 To download images, source and segmentations: http://www.vision.caltech.edu/visipedia/CUB-200-2011.html
 Unzip to this repo folder into `data/CUB_200_2011` and `data/segmentations`.

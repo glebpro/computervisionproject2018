@@ -12,6 +12,21 @@ import numpy as np
 import cv2
 
 
+def plot_saliency(image, model):
+    # model.layers[layer_idx].activation = activations.linear
+    # model = utils.apply_modifications(model)
+
+    x_test = cv2.imread(image)
+    x_test = cv2.resize(x_test, (150, 150))
+
+    grads = []
+    titles = []
+    for layer_idx in list(range(len(model.layers))):
+        titles.append(model.layers[layer_idx].name)
+        grads.append(visualize_saliency(model, layer_idx, filter_indices=1, seed_input=x_test))
+
+    show_images(grads, titles, 4)
+
 def show_images(images, titles = None, cols = 1):
     """Display a list of images in a single figure with matplotlib.
 
@@ -38,4 +53,4 @@ def show_images(images, titles = None, cols = 1):
     plt.tight_layout()
     plt.show()
 
-__all__ = ['show_images']
+__all__ = ['show_images', 'plot_saliency']

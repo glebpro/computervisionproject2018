@@ -26,29 +26,10 @@ from vis.visualization import visualize_activation
 from vis.utils import utils
 from vis.visualization import visualize_saliency
 
-from utils import show_images
+from utils import show_images, plot_saliency
 
 
 PROJECT_ROOT = os.path.dirname(os.path.realpath(__file__+"/.."))
-
-class GifPlot(object):
-
-    def __init__(self, model):
-
-        # Swap softmax with linear
-        # model.layers[layer_idx].activation = activations.linear
-        # model = utils.apply_modifications(model)
-
-        x_test = cv2.imread("/Users/gpro/gpc/rit/compvis/BirdNet/data/split_segmented_images/test/001.Black_footed_Albatross/Black_Footed_Albatross_0071_796113_SEGMENTED.png")
-        x_test = cv2.resize(x_test, (150, 150))
-
-        grads = []
-        titles = []
-        for layer_idx in list(range(len(model.layers))):
-            titles.append(model.layers[layer_idx].name)
-            grads.append(visualize_saliency(model, layer_idx, filter_indices=1, seed_input=x_test))
-
-        show_images(grads, titles, 4)
 
 class BirdNetClassifer(object):
     """
@@ -197,18 +178,21 @@ def main():
     # build+save classifier
     bnc = BirdNetClassifer(classes, training_images_dir, validation_images_dir)
     bnc.train(training_images_dir, validation_images_dir)
+
+
     timestamp = datetime.datetime.now().strftime("%d-%m-%Y_%H:%M:%S")
     bnc.save('models/BirdNetModel_%s.h5' % timestamp)
+
+    
     # bnc.load(PROJECT_ROOT+"/models/BirdNetModel_first5classes_fullcolor_16-03-2018_11:05:50.h5")
-
-    # print(dir(bnc.model))
-
-    # g = GifPlot(bnc.model)
 
 
     bnc.evaluate(testing_images_dir)
 
     # bnc.save_image(PROJECT_ROOT+"/models/model1.png")
+
+    # plot_saliency(PROJECT_ROOT+"/data/split_segmented_images/train/001.Black_footed_Albatross/Black_Footed_Albatross_0047_796064.png", bnc.model)
+
 
 if __name__ == "__main__":
     main()
