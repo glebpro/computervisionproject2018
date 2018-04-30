@@ -19,15 +19,6 @@ from keras.utils import plot_model
 from keras.callbacks import Callback, TensorBoard
 from keras import activations
 
-from matplotlib import pyplot as plt
-from IPython.display import clear_output
-
-from vis.visualization import visualize_activation
-from vis.utils import utils
-from vis.visualization import visualize_saliency
-
-from utils import show_images, plot_saliency
-
 
 PROJECT_ROOT = os.path.dirname(os.path.realpath(__file__+"/.."))
 
@@ -40,10 +31,10 @@ class BirdNetClassifer(object):
 
         # constants
         self.classes = classes
-        self.IMG_WIDTH = 150
-        self.IMG_HEIGHT = 150
+        self.IMG_WIDTH = 300
+        self.IMG_HEIGHT = 300
         self.EPOCHS = 50
-        self.BATCH_SIZE = 16
+        self.BATCH_SIZE = 24
 
         self.N_TRAINING = 0
         self.N_VALIDATION = 0
@@ -117,12 +108,14 @@ class BirdNetClassifer(object):
                             testing_images_dir,
                             target_size=(self.IMG_WIDTH, self.IMG_HEIGHT),
                             batch_size=self.BATCH_SIZE
-                            ,color_mode='grayscale'
+                            # ,color_mode='grayscale'
                             )
 
         stats = self.model.evaluate_generator(eval_generator, steps=len(eval_generator))
 
         print(stats)
+
+        return stats
 
     def _make_blank_model(self):
         """
@@ -163,16 +156,7 @@ class BirdNetClassifer(object):
 
         return model
 
-def main():
-
-    # define training/validation/testing images directories
-    training_images_dir = PROJECT_ROOT + "/data/split_segmented_head_images/train"
-    validation_images_dir = PROJECT_ROOT + "/data/split_segmented_head_images/validation"
-    testing_images_dir = PROJECT_ROOT + "/data/split_segmented_head_images/test"
-
-    # get class labels vector
-    classes = open(PROJECT_ROOT + "/data/CUB_200_2011/classes.txt").readlines()
-    classes = [r.split()[1].strip() for r in classes]
+def run_model(name, classes, training_images_dir, validation_images_dir, testing_images_dir):
 
     # build+save classifier
     bnc = BirdNetClassifer(classes, training_images_dir, validation_images_dir)
@@ -183,15 +167,45 @@ def main():
 
     time_end = datetime.datetime.now()
 
-    bnc.save('models/BirdNetModel_%s.h5' % time_end.strftime("%d-%m-%Y_%H:%M:%S"))
+    bnc.save('models/BirdNetModel_%s_%s.h5' % (name, time_end.strftime("%d-%m-%Y_%H:%M:%S")))
 
     print("~~~ TRAINING TIME: ", time_end-time_start)
 
+    stats = bnc.evaluate(testing_images_dir)
+
+    with open('RESULTS.txt', 'a') as results:
+        results.write(name+'\n')
+        results.write(str(stats)+'\n')
+        results.write(str(time_end-time_start)+'\n')
+        results.write('\n')
+
+def main():
+
+    # get class labels vector
+    classes = open(PROJECT_ROOT + "/FINAL/classes.txt").readlines()
+    classes = [r.split()[1].strip() for r in classes]
+
+    training_images_dir = PROJECT_ROOT + "/FINAL/split_raw_images/train"
+    validation_images_dir = PROJECT_ROOT + "/FINAL/split_raw_images/validation"
+    testing_images_dir = PROJECT_ROOT + "/FINAL/split_raw_images/test"
+
+    run_model('RAW', classes, training_images_dir, validation_images_dir, testing_images_dir)
+
+    training_images_dir = PROJECT_ROOT + "/FINAL/split_segmented_head_images/train"
+    validation_images_dir = PROJECT_ROOT + "/FINAL/split_segmented_head_images/validation"
+    testing_images_dir = PROJECT_ROOT + "/FINAL/split_segmented_head_images/test"
+
+    run_model('SEGMENTED_HEADS', classes, training_images_dir, validation_images_dir, testing_images_dir)
+
+    training_images_dir = PROJECT_ROOT + "/FINAL/split_segmented_images/train"
+    validation_images_dir = PROJECT_ROOT + "/FINAL/split_segmented_images/validation"
+    testing_images_dir = PROJECT_ROOT + "/FINAL/split_segmented_images/test"
+
+    run_model('SEGMENTED', classes, training_images_dir, validation_images_dir, testing_images_dir)
 
     # bnc.load(PROJECT_ROOT+"/models/BirdNetModel_first5classes_fullcolor_16-03-2018_11:05:50.h5")
 
-
-    bnc.evaluate(testing_images_dir)
+    # bnc.evaluate(testing_images_dir)
 
     # bnc.save_image(PROJECT_ROOT+"/models/model1.png")
 

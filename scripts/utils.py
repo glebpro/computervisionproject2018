@@ -11,6 +11,31 @@ from matplotlib import pyplot as plt
 import numpy as np
 import cv2
 
+def plot_layer_activations(image, model):
+    #     #Create new sequential model, same as before but just keep the convolutional layer.
+    # model_new = Sequential()
+    # model_new.add(Conv2D(nb_filters, kernel_size=(3, 3),
+    #                  activation='relu',
+    #                  input_shape=input_shape))
+    # #set weights for new model from weights trained on MNIST.
+    # for i in range(1):
+    #     model_new.layers[i].set_weights(model.layers[i].get_weights())
+    # #pick a random digit and "predict" on this digit (output will be first layer of CNN)
+    # i = np.random.randint(0,len(x_test))
+    # digit = x_test[i].reshape(1,28,28,1)
+    # pred = model_new.predict(digit)
+    # #check shape of prediction
+    # print pred.shape
+    # (1, 26, 26, 32)
+    # #For all the filters, plot the output of the input
+    # plt.figure(figsize=(18,18))
+    # filts = pred[0]
+    # for i in range(nb_filters):
+    #     filter_digit = filts[:,:,i]
+    #     plt.subplot(6,6,i+1)
+    #     plt.imshow(filter_digit,cmap='gray'); plt.axis('off');
+
+    pass
 
 def plot_saliency(image, model):
     # model.layers[layer_idx].activation = activations.linear

@@ -70,7 +70,7 @@ def apply_segmentations(classes, data):
         os.makedirs(output_dir)
 
     for r in data:
-        print("~~~ SEGMENTING: "+r[1])
+        # print("~~~ SEGMENTING: "+r[1])
         seg = cv2.imread(r[2])
         img = cv2.imread(r[1])
         img2 = cv2.bitwise_and(img, seg)
@@ -114,7 +114,7 @@ def split_dir(dirr, output_dir, dirs=['train', 'validation', 'test'], split=(.5,
             class_dict[class_name] = []
         class_dict[class_name].append(str(i))
 
-    del class_dict['segmented_head_images'] #I don't know why
+    del class_dict['images'] #I don't know why
 
     # organize into {class_name:[[train_paths],[validation_paths],[test_paths]], ...}
     # by given
@@ -184,7 +184,7 @@ def segment_heads(classes, data):
         boudning_ids[int(i[0])] = list(map(lambda x:int(float(x)), i[1:]))
 
     for r in data:
-        print("~~~SEGMENTING HEAD: ", r[1])
+        # print("~~~SEGMENTING HEAD: ", r[1])
 
         img_id = r[1].split('/')
         img_id = img_id[len(img_id)-2] + '/' + img_id[len(img_id)-1].replace('png', 'jpg')
@@ -254,22 +254,25 @@ def main():
 
     # classes = ['001.Black_footed_Albatross', '002.Laysan_Albatross', ...]
     # data = [(class, source_image_path, segmentation_image_path), ...]
-    classes, data = load_images()
-
-    data = data[:100]
+    # classes, data = load_images()
+    print("~~~ Loaded")
 
     # plot_class_distribution(data)
 
     # data = [(class, segmented_image_path), ...]
-    data = apply_segmentations(classes, data)
+    # data = apply_segmentations(classes, data)
+    print("~~~ Segmented")
 
     # data = [(class, segmented_head_image_path), ...]
-    data = segment_heads(classes, data)
+    # data = segment_heads(classes, data)
+    print("~~~ segment_heads")
 
     # split each class subdirectory into train/validation/test subdirectories
-    split_dir(PROJECT_ROOT + "/data/segmented_head_images/", PROJECT_ROOT + "/data/split_segmented_head_images/")
+    split_dir(PROJECT_ROOT + "/data/CUB_200_2011/images/", PROJECT_ROOT + "/data/FINAL/split_raw_images/")
+    print("~~~ split")
 
     # convert_to_edges("/Users/gpro/gpc/rit/compvis/BirdNet/data/split_segmented_images_5_edges")
+    print("~~~ done")
 
 
 if __name__ == "__main__":
