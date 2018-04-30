@@ -254,24 +254,27 @@ def main():
 
     # classes = ['001.Black_footed_Albatross', '002.Laysan_Albatross', ...]
     # data = [(class, source_image_path, segmentation_image_path), ...]
-    # classes, data = load_images()
+    classes, data = load_images()
     print("~~~ Loaded")
 
     # plot_class_distribution(data)
 
     # data = [(class, segmented_image_path), ...]
-    # data = apply_segmentations(classes, data)
+	# save to /data/segmented_images
+    data = apply_segmentations(classes, data)
     print("~~~ Segmented")
 
     # data = [(class, segmented_head_image_path), ...]
-    # data = segment_heads(classes, data)
+	# save to /data/segmented_head_images
+    data = segment_heads(classes, data)
     print("~~~ segment_heads")
 
     # split each class subdirectory into train/validation/test subdirectories
     split_dir(PROJECT_ROOT + "/data/CUB_200_2011/images/", PROJECT_ROOT + "/data/FINAL/split_raw_images/")
+    split_dir(PROJECT_ROOT + "/data/segmented_images/", PROJECT_ROOT + "/data/FINAL/split_segmented_images/")
+    split_dir(PROJECT_ROOT + "/data/segmented_head_images/", PROJECT_ROOT + "/data/FINAL/split_segmented_head_images/")
     print("~~~ split")
 
-    # convert_to_edges("/Users/gpro/gpc/rit/compvis/BirdNet/data/split_segmented_images_5_edges")
     print("~~~ done")
 
 
