@@ -229,6 +229,31 @@ def segment_heads(classes, data):
 
     return segmented_data
 
+def image_classes():
+    """
+    Read in class labels of the images
+    """
+
+    image_data_path = PROJECT_ROOT + "/data/CUB_200_2011/"
+
+    # <class_id> <class_name>
+    classes = open(image_data_path + "classes.txt").readlines()
+    classes = [i.strip().split() for i in classes]
+
+    # <image_id> <class_id>
+    labels = open(image_data_path + "image_class_labels.txt").readlines()
+    labels = [i.strip().split() for i in labels]
+
+    class_ids = {}
+    for i in classes:
+        class_ids[i[1]] = int(i[0])
+
+    label_ids = {}
+    for i in labels:
+        label_ids[int(i[0])] = int(i[1])
+
+    return class_ids, label_ids
+
 def load_attributes():
     """
     Read in attribute labels and certainties.
@@ -258,7 +283,7 @@ def load_attributes():
     for i in labels_file:
         label_ids[(int(i[0]), int(i[1]))] = list(map(lambda x:int(float(x)), i[2:]))
 
-    return attribute_ids, certainty_ids, label_ids
+    return attribute_ids, certainty_ids, labels_file, label_ids
 
 def check_data_struct():
     """
